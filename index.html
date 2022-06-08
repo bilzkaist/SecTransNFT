@@ -11,6 +11,17 @@
 	<!--JS -->
   <!-- include the library -->
 <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+<script>
+  // Add a global error event listener early on in the page load, to help ensure that browsers
+  // which don't support specific functionality still end up displaying a meaningful message.
+  window.addEventListener('error', function(error) {
+    if (ChromeSamples && ChromeSamples.setStatus) {
+      console.error(error);
+      ChromeSamples.setStatus(error.message + ' (Your browser may not support this feature.)');
+      error.preventDefault();
+    }
+  });
+</script>
 
   </head>
   <body>
@@ -208,6 +219,26 @@ Registration and Distribution</a>
     </div>
     <hr>
     <div class="container">
+      <div class="card">
+          <div class="card-body">
+            <div class="text-center">
+              <button id="scanButton">Scan</button>
+              <button id="writeButton">Write</button>
+              <button id="makeReadOnlyButton">Make Read-Only</button>
+              <div>
+                <h3>Live Output</h3>
+                <div id="output" class="output">
+                  <div id="content"></div>
+                  <div id="status"></div>
+                  <pre id="log"></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+    </div>
+    <hr>
+    <div class="container">
 		<div class="card">
            <!-- <img class="card-img-top" src="images/space_gps_400_200.png" alt="Card image cap">-->
            
@@ -224,6 +255,52 @@ Registration and Distribution</a>
 <a href="#">And More</a> <br><br>
 
               <a href="#" class="btn btn-primary">Read more</a>
+              <script>
+              scanButton.addEventListener("click", async () => {
+                log("User clicked scan button");
+              
+                try {
+                  const ndef = new NDEFReader();
+                  await ndef.scan();
+                  log("> Scan started");
+              
+                  ndef.addEventListener("readingerror", () => {
+                    log("Argh! Cannot read data from the NFC tag. Try another one?");
+                  });
+              
+                  ndef.addEventListener("reading", ({ message, serialNumber }) => {
+                    log(`> Serial Number: ${serialNumber}`);
+                    log(`> Records: (${message.records.length})`);
+                  });
+                } catch (error) {
+                  log("Argh! " + error);
+                }
+              });
+              
+              writeButton.addEventListener("click", async () => {
+                log("User clicked write button");
+              
+                try {
+                  const ndef = new NDEFReader();
+                  await ndef.write("Hello world!");
+                  log("> Message written");
+                } catch (error) {
+                  log("Argh! " + error);
+                }
+              });
+              
+              makeReadOnlyButton.addEventListener("click", async () => {
+                log("User clicked make read-only button");
+              
+                try {
+                  const ndef = new NDEFReader();
+                  await ndef.makeReadOnly();
+                  log("> NFC tag has been made permanently read-only");
+                } catch (error) {
+                  log("Argh! " + error);
+                }
+              });
+              </script>
             </div>
           </div>
 	  </div>
@@ -458,6 +535,7 @@ Registration and Distribution</a>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/popper.min.js"></script>
     <script src="js/bootstrap-4.4.1.js"></script>
+    <script src="js/nfc.js"></script>
     
   </body>
 </html>
